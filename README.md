@@ -1,4 +1,4 @@
-# dircolos-chromatizer
+# dircolors-chromatizer
 A utility for generating custom dircolors files, interactively.
 
 > [!CAUTION]
