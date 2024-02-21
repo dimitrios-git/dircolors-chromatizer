@@ -9,7 +9,7 @@
 
 # Global variables
 help=""
-version="20230929b"
+version="20240221b"
 demo_dir="demo"
 macros_dir="${demo_dir}/macros"
 mime_types_dir="${demo_dir}/mime-types"
@@ -20,65 +20,61 @@ verbose="false"
 
 # Function to print a message of a new section
 print_msg() {
-	local section="$1"
-	local msg_welcome="Welcome to the default-dircolors-generator!
+  local section="$1"
+  local msg_welcome="Welcome to dircolors-chromatizer!
 
 This script will generate a dircolors configuration file interactively, based
-on the mime.types file in the /etc directory. It will also create a demo
-directory structure with files and directories of different types, to help you
-test the dircolors configuration file.
+on the mime.types file in the /etc directory.
 "
 
-	if [[ ${section} == "msg_welcome" ]]; then
-		divider "-"
-		printf "${msg_welcome}\n"
-	fi
+  if [[ ${section} == "msg_welcome" ]]; then
+    divider "-"
+    printf "${msg_welcome}\n"
+  fi
 }
 
 # Function to print a divider
 divider() {
-	local divider=""
-	local character="$1"
-	for (( i = 0; i < 80; i++ )); do
-		divider="${divider}${character}"
-	done
+  local divider=""
+  local character="$1"
+  for (( i = 0; i < 80; i++ )); do
+    divider="${divider}${character}"
+  done
 
-	echo "$divider"
+  echo "$divider"
 }
 
 # Function to prompt user for yes/no/quit
 prompt_ynq() {
-	local message="$1"
-	local result
-	
-	while true; do
-		read -p "$message [y/n/q]: " result < /dev/tty
-		case $result in
-			[Yy]* ) return 0;;
-			[Nn]* ) return 1;;
-			[Qq]* ) exit 0;;
-			* ) printf "Please answer yes, no or quit\n";
-		esac
-	done
+  local message="$1"
+  local result
+  while true; do
+    read -p "$message [y/n/q]: " result < /dev/tty
+    case $result in
+      [Yy]* ) return 0;;
+      [Nn]* ) return 1;;
+      [Qq]* ) exit 0;;
+      * ) printf "Please answer yes, no or quit\n";
+    esac
+  done
 }
 
 # Function to create or overwrite a directory
 create_directory() {
-	local dir="$1"
-	local message="
+  local dir="$1"
+  local message="
 The script will use the existing directory and it will not delete or overwrite
 existing files, however, it may alter their permissions in some cases.
 "
-	
-	if [[ -d "$dir" ]]; then
-		if prompt_ynq 'A "'$dir'" directory already exists. Remove?'; then
-			rm -rf "$dir" && mkdir -p "$dir"
-		else
-			echo "$message"
-		fi
-	else
-		mkdir -p "$dir"
-	fi
+  if [[ -d "$dir" ]]; then
+    if prompt_ynq 'A "'$dir'" directory already exists. Remove?'; then
+      rm -rf "$dir" && mkdir -p "$dir"
+    else
+      echo "$message"
+    fi
+  else
+    mkdir -p "$dir"
+  fi
 }
 
 # Function to check permissions
@@ -87,11 +83,11 @@ check_permissions() {
     local expected_perms="$2"
     local actual_perms=$(stat -c "%a" "$file")
     if [[ "$actual_perms" == "$expected_perms" ]]; then
-    	printf "Permissions for $file are already set to $expected_perms."
-    	return 0
+      printf "Permissions for $file are already set to $expected_perms."
+      return 0
     else
-    	return 1
-    	fi
+      return 1
+      fi
 }
 
 # Function to create demo directories and files
@@ -157,194 +153,180 @@ create_demo_macros() {
 
 # Function to detect and display the number of supported colors in columns
 detect_display_colors() {
-	ground="$1"
-	
-	echo "Detecting terminal colors..."
-	num_colors=$(tput colors 2>/dev/null)
+  ground="$1"
+  echo "Detecting terminal colors..."
+  num_colors=$(tput colors 2>/dev/null)
 
-	if [[ $? -eq 0 && $num_colors -gt 0 ]]; then
-		echo "Your terminal supports ${num_colors} colors."
-		echo "Displaying them now..."
-		for (( i = 0; i < num_colors; i++ )); do
-			# Display the color with its number, without breaking the line.
-			echo -en "${s_aes}${ground};${i}m${i}${e_aes}\t"
-			
-			# If 8 colors have been printed in the current row,
-			# move to the next line.
-			if (( (i+1) % 8 == 0 )); then
-				echo ""
-				fi
-			done
-			# Ensure there's a newline after the colors
-			echo ""
-		else
-			echo "Error: Unable to detect the number of supported colors."
-			echo ""
-			exit 1
-	fi
+  if [[ $? -eq 0 && $num_colors -gt 0 ]]; then
+    echo "Your terminal supports ${num_colors} colors."
+    echo "Displaying them now..."
+    for (( i = 0; i < num_colors; i++ )); do
+      # Display the color with its number, without breaking the line.
+      echo -en "${s_aes}${ground};${i}m${i}${e_aes}\t"
+      # If 8 colors have been printed in the current row,
+      # move to the next line.
+      if (( (i+1) % 8 == 0 )); then
+        echo ""
+        fi
+      done
+      # Ensure there's a newline after the colors
+      echo ""
+    else
+      echo "Error: Unable to detect the number of supported colors."
+      echo ""
+      exit 1
+  fi
 }
 
 # Function to display a color with optional effects side by side
 display_color() {
-	local palette="$1" #16-color,256-color,true-color
-	local effect="$2"
-	local ground="$3"
-	
-	# Append the formatted color to the line, without breaking the line.
-	if [[ "$palette" == 16-color ]];
-	then
-		# TODO Add support for 16-color palette
-		echo -en ""
-	elif [[ "$palette" == 256-color ]];
-	then
-		sequence="${effect};${ground};${code}"
-		echo -en "${s_aes}${sequence}m${sequence}${e_aes}\t"
-	elif [[ "$palette" == true-color ]];
-	then
-		# TODO Add support for true-color palette
-		echo -en ""
-	fi
+  local palette="$1" #16-color,256-color,true-color
+  local effect="$2"
+  local ground="$3"
+  # Append the formatted color to the line, without breaking the line.
+  if [[ "$palette" == 16-color ]];
+  then
+    # TODO Add support for 16-color palette
+    echo -en ""
+  elif [[ "$palette" == 256-color ]];
+  then
+    sequence="${effect};${ground};${code}"
+    echo -en "${s_aes}${sequence}m${sequence}${e_aes}\t"
+  elif [[ "$palette" == true-color ]];
+  then
+    # TODO Add support for true-color palette
+    echo -en ""
+  fi
 }
 
 # Function to display ANSI effects
 # TODO Add support for other palettes
 display_effects() {
-	echo "0: Reset/Normal"
-	echo "1: Bold/Bright"
-	echo ""
-	echo "Foreground colors               Background colors"
-	echo "------------------------        -------------------------"
-	for code in {0..7}; do
-		for effect in {0..1}; do
-			display_color "256-color" "${effect}" "38;5" "${code}"
-			display_color "256-color" "${effect}" "48;5" "${code}"
-		done
-		echo ""  # Move to the next line after a row is complete
-	done
-	echo ""
-	echo "2: Faint/Dim"
-	echo "3: Italic"
-	echo ""
-	echo "Foreground colors               Background colors"
-	echo "------------------------        -------------------------"
-	for code in {0..7}; do
-		for effect in {2..3}; do
-			display_color "256-color" "${effect}" "38;5" "${code}"
-			display_color "256-color" "${effect}" "48;5" "${code}"
-			done
-			echo ""  # Move to the next line after a row is complete
-	done
-	echo ""
-	echo "4: Underline"
-	echo "5: Blink"
-	echo ""
-	echo "Foreground colors               Background colors"
-	echo "------------------------        -------------------------"
-	for code in {0..7}; do
-		for effect in {4..5}; do
-			display_color "256-color" "${effect}" "38;5" "${code}"
-			display_color "256-color" "${effect}" "48;5" "${code}"
-		done
-		echo ""  # Move to the next line after a row is complete
-	done
-	echo ""
-	echo "6: Rapid Blink"
-	echo "7: Reverse"
-	echo ""
-	echo "Foreground colors               Background colors"
-	echo "------------------------        -------------------------"
-	for code in {0..7}; do
-		for effect in {6..7}; do
-			display_color "256-color" "${effect}" "38;5" "${code}"
-			display_color "256-color" "${effect}" "48;5" "${code}"
-		done
-		echo ""  # Move to the next line after a row is complete
-	done
-	echo ""
-	echo "8: Concealed/Hidden"
-	echo "9: Strikethrough"
-	echo ""
-	echo "Foreground colors               Background colors"
-	echo "------------------------        -------------------------"
-	for code in {0..7}; do
-		for effect in {8..9}; do
-			display_color "256-color" "${effect}" "38;5" "${code}"
-			display_color "256-color" "${effect}" "48;5" "${code}"
-		done
-		echo ""  # Move to the next line after a row is complete
-	done
-	echo ""
+  echo "0: Reset/Normal"
+  echo "1: Bold/Bright"
+  echo ""
+  echo "Foreground colors               Background colors"
+  echo "------------------------        -------------------------"
+  for code in {0..7}; do
+    for effect in {0..1}; do
+      display_color "256-color" "${effect}" "38;5" "${code}"
+      display_color "256-color" "${effect}" "48;5" "${code}"
+    done
+    echo ""  # Move to the next line after a row is complete
+  done
+  echo ""
+  echo "2: Faint/Dim"
+  echo "3: Italic"
+  echo ""
+  echo "Foreground colors               Background colors"
+  echo "------------------------        -------------------------"
+  for code in {0..7}; do
+    for effect in {2..3}; do
+      display_color "256-color" "${effect}" "38;5" "${code}"
+      display_color "256-color" "${effect}" "48;5" "${code}"
+      done
+      echo ""  # Move to the next line after a row is complete
+  done
+  echo ""
+  echo "4: Underline"
+  echo "5: Blink"
+  echo ""
+  echo "Foreground colors               Background colors"
+  echo "------------------------        -------------------------"
+  for code in {0..7}; do
+    for effect in {4..5}; do
+      display_color "256-color" "${effect}" "38;5" "${code}"
+      display_color "256-color" "${effect}" "48;5" "${code}"
+    done
+    echo ""  # Move to the next line after a row is complete
+  done
+  echo ""
+  echo "6: Rapid Blink"
+  echo "7: Reverse"
+  echo ""
+  echo "Foreground colors               Background colors"
+  echo "------------------------        -------------------------"
+  for code in {0..7}; do
+    for effect in {6..7}; do
+      display_color "256-color" "${effect}" "38;5" "${code}"
+      display_color "256-color" "${effect}" "48;5" "${code}"
+    done
+    echo ""  # Move to the next line after a row is complete
+  done
+  echo ""
+  echo "8: Concealed/Hidden"
+  echo "9: Strikethrough"
+  echo ""
+  echo "Foreground colors               Background colors"
+  echo "------------------------        -------------------------"
+  for code in {0..7}; do
+    for effect in {8..9}; do
+      display_color "256-color" "${effect}" "38;5" "${code}"
+      display_color "256-color" "${effect}" "48;5" "${code}"
+    done
+    echo ""  # Move to the next line after a row is complete
+  done
+  echo ""
 }
 
 # Function for the color wizard
 color_wizard() {
-	# Prompt the user to choose a color and effect from the displayed options
-	# TODO Do some input validation
-	read -p "Pick a foreground color code (0-255): " u_color_fg < /dev/tty
-	read -p "Pick a background color code (0-255): " u_color_bg < /dev/tty
-	echo "Add optional effect codes from the range (0-9):"
-	echo "    - e.g., 1 for bold, 7 for reverse, 0 or empty for none"
-	echo "    - You can pick multiple effects, e.g., 1;7 for bold and reverse"
-	read -p "Pick your effects: " u_effects < /dev/tty
+  # Prompt the user to choose a color and effect from the displayed options
+  # TODO Do some input validation
+  read -p "Pick a foreground color code (0-255): " u_color_fg < /dev/tty
+  read -p "Pick a background color code (0-255): " u_color_bg < /dev/tty
+  echo "Add optional effect codes from the range (0-9):"
+  echo "    - e.g., 1 for bold, 7 for reverse, 0 or empty for none"
+  echo "    - You can pick multiple effects, e.g., 1;7 for bold and reverse"
+  read -p "Pick your effects: " u_effects < /dev/tty
 
-	# Form the user sequence
-	u_seq="${u_effects};38;5;${u_color_fg};48;5;${u_color_bg}"
+  # Form the user sequence
+  u_seq="${u_effects};38;5;${u_color_fg};48;5;${u_color_bg}"
 
-	# Display the escape sequence and a text with the chosen color and effect
-	echo "The ANSI escape sequence for the above combination is:"
-	echo "${s_aes}${u_seq}mThese are your chosen colors and effects!${e_aes}"
-	echo ""
+  # Display the escape sequence and a text with the chosen color and effect
+  echo "The ANSI escape sequence for the above combination is:"
+  echo "${s_aes}${u_seq}mThese are your chosen colors and effects!${e_aes}"
+  echo ""
 }
-
-
-
-
-
-
-
-
-
-
-
-
+# The code has been reviewed up to this point.
 
 # Function to configure dircolors file
 configure_dircolors_file() {
-	filename="$1"
+  filename="$1"
 
-	found_escape=false
+  found_escape=false
 
-	while IFS= read -r line; do
-		# Remove leading and trailing whitespace
-		line="${line#"${line%%[![:space:]]*}"}"
-		line="${line%"${line##*[![:space:]]}"}"
+  while IFS= read -r line; do
+    # Remove leading and trailing whitespace
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
 
-		# Ignore empty lines
-		if [ -z "$line" ]; then
-			continue
-		fi
+    # Ignore empty lines
+    if [ -z "$line" ]; then
+      continue
+    fi
 
-		# Ignore lines starting with '#' (comments)
-		if [[ $line == \#* ]]; then
-			continue
-		fi
+    # Ignore lines starting with '#' (comments)
+    if [[ $line == \#* ]]; then
+      continue
+    fi
 
-		# Check if "ANSI_ESCAPE" exists in the line
-		if [[ $line == *ANSI_ESCAPE* ]]; then
-			found_escape=true
-		fi
+    # Check if "ANSI_ESCAPE" exists in the line
+    if [[ $line == *ANSI_ESCAPE* ]]; then
+      found_escape=true
+    fi
 
-		# TODO find a way to reduce repeated code
-		# If we found the first "ANSI_ESCAPE" line,
-		if $found_escape;
-		then
-			if [[ $line == *MACROS* ]];
-			then
-				# TODO Ask for colors and effects for MACROS
-				local macro=$(echo "$line" | awk '{print $1}')
-				local description=$(echo "$line" | awk '{for (i=5; i<=NF; i++) printf "%s ", $i; printf "\n"}')
-				while true; do
-					prompt_msg="Try:
+    # TODO find a way to reduce repeated code
+    # If we found the first "ANSI_ESCAPE" line,
+    if $found_escape;
+    then
+      if [[ $line == *MACROS* ]];
+      then
+        # TODO Ask for colors and effects for MACROS
+        local macro=$(echo "$line" | awk '{print $1}')
+        local description=$(echo "$line" | awk '{for (i=5; i<=NF; i++) printf "%s ", $i; printf "\n"}')
+        while true; do
+          prompt_msg="Try:
 i - for more information
 w - for starting the color wizard
 c - for displaying text colors
@@ -352,70 +334,69 @@ e - for displaying text effects
 q - for quit
 Enter an ANSI escape sequence for:"
 
-					prompt_for="$description"
-					prompt_default="(thedefault: 00;00): "
-					prompt_full="$prompt_msg"$'\n'"$prompt_for"$'\n'"$prompt_default"
-			
-					# Read user input into a variable
-					read -p "${prompt_full}" u_input < /dev/tty
-					u_input=${u_input:-00;00}
+          prompt_for="$description"
+          prompt_default="(thedefault: 00;00): "
+          prompt_full="$prompt_msg"$'\n'"$prompt_for"$'\n'"$prompt_default"
+          # Read user input into a variable
+          read -p "${prompt_full}" u_input < /dev/tty
+          u_input=${u_input:-00;00}
 
-					# Format checking
-					# TODO allow target for links
-					if echo "$u_input" | grep -qE "^([0-9;iwqce]*)$";
-					then
-						echo "" # valid input
-					else
-						echo "Invalid input. Try again."
-					echo ""
-						break  # Exit the inner loop on invalid input
-					fi
+          # Format checking
+          # TODO allow target for links
+          if echo "$u_input" | grep -qE "^([0-9;iwqce]*)$";
+          then
+            echo "" # valid input
+          else
+            echo "Invalid input. Try again."
+          echo ""
+            break  # Exit the inner loop on invalid input
+          fi
 
-					case $u_input in
-						[Ii]* )
-							printf "MACRO: $macro\n"
-							printf "Description: $description\n"
-							continue
-							;;
-						[Ww]* )
-							color_wizard
-							u_input="${u_seq}"
-							;;
-						[Cc]* )
-							detect_display_colors "38;5"
-							continue
-							;;
-						[Ee]* )
-							display_effects
-							continue
-							;;
-						[Qq]* )
-							exit 0
-					esac
+          case $u_input in
+            [Ii]* )
+              printf "MACRO: $macro\n"
+              printf "Description: $description\n"
+              continue
+              ;;
+            [Ww]* )
+              color_wizard
+              u_input="${u_seq}"
+              ;;
+            [Cc]* )
+              detect_display_colors "38;5"
+              continue
+              ;;
+            [Ee]* )
+              display_effects
+              continue
+              ;;
+            [Qq]* )
+              exit 0
+          esac
 
-					# Show the colors and effects to the user and ask for
-					# confirmation
-					echo -e "
+          # Show the colors and effects to the user and ask for
+          # confirmation
+          echo -e "
 ${s_aes}${u_input}mThese are your chosen colors and effects for:\n\
 ${description}${e_aes}"
-					echo ""
-					echo ""
-					preprompt="Is this the correct colors and effect for:"$'\n'
-					if prompt_ynq "${preprompt}${description}? ";
-					then
-						# Replace the ANSI_ESCAPE with the user input
-						sed -i "s/${macro} ANSI_ESCAPE/${macro} ${u_input}/g" "$filename"
-					break
-					fi
-				done
+          echo ""
+          echo ""
+          preprompt="Is this the correct colors and effect for:"$'\n'
+          if prompt_ynq "${preprompt}${description}? ";
+          then
+            # Replace the ANSI_ESCAPE with the user input
+            sed -i "s/${macro} ANSI_ESCAPE/${macro} ${u_input}/g" "$filename"
+          break
+          fi
+        done
 
-			else
-				# TODO Ask for colors and effects for extensions
-				local extension=$(echo "$line" | awk '{print $1}')
-				local mime_type=$(echo "$line" | awk '{print $4}')
-				local mime_subtype=$(echo "$line" | awk '{print $5}')
-				while true; do
-					prompt_msg="Try:
+      else
+        # TODO Ask for colors and effects for extensions
+        local extension=$(echo "$line" | awk '{print $1}')
+        local mime_type=$(echo "$line" | awk '{print $4}')
+        local mime_subtype=$(echo "$line" | awk '{print $5}')
+        while true; do
+          prompt_msg="Try:
 i - for more information
 w - for starting the color wizard
 c - for displaying text colors
@@ -423,76 +404,75 @@ e - for displaying text effects
 q - for quit
 Enter an ANSI escape sequence for:"
 
-					prompt_for="$extension"
-					prompt_default="(thedefault: 00;00): "
-					prompt_full="$prompt_msg"$'\n'"$prompt_for"$'\n'"$prompt_default"
-			
-					# Read user input into a variable
-					read -p "${prompt_full}" u_input < /dev/tty
-					u_input=${u_input:-00;00}
+          prompt_for="$extension"
+          prompt_default="(thedefault: 00;00): "
+          prompt_full="$prompt_msg"$'\n'"$prompt_for"$'\n'"$prompt_default"
+          # Read user input into a variable
+          read -p "${prompt_full}" u_input < /dev/tty
+          u_input=${u_input:-00;00}
 
-					# Format checking
-					if echo "$u_input" | grep -qE "^([0-9;iwqce]*)$";
-					then
-						echo "" # valid input
-					else
-						echo "Invalid input. Try again."
-					echo ""
-						break  # Exit the inner loop on invalid input
-					fi
+          # Format checking
+          if echo "$u_input" | grep -qE "^([0-9;iwqce]*)$";
+          then
+            echo "" # valid input
+          else
+            echo "Invalid input. Try again."
+          echo ""
+            break  # Exit the inner loop on invalid input
+          fi
 
-					case $u_input in
-						[Ii]* )
-							printf "Extension: $extension\n"
-							printf "MIME type: $mime_type\n"
-							printf "MIME subtype: $mime_subtype\n"
-							continue
-							;;
-						[Ww]* )
-							color_wizard
-							u_input="${u_seq}"
-							;;
-						[Cc]* )
-							detect_display_colors "38;5"
-							continue
-							;;
-						[Ee]* )
-							display_effects
-							continue
-							;;
-						[Qq]* )
-							exit 0
-					esac
+          case $u_input in
+            [Ii]* )
+              printf "Extension: $extension\n"
+              printf "MIME type: $mime_type\n"
+              printf "MIME subtype: $mime_subtype\n"
+              continue
+              ;;
+            [Ww]* )
+              color_wizard
+              u_input="${u_seq}"
+              ;;
+            [Cc]* )
+              detect_display_colors "38;5"
+              continue
+              ;;
+            [Ee]* )
+              display_effects
+              continue
+              ;;
+            [Qq]* )
+              exit 0
+          esac
 
-					# Show the colors and effects to the user and ask for
-					# confirmation
-					echo -e "
+          # Show the colors and effects to the user and ask for
+          # confirmation
+          echo -e "
 ${s_aes}${u_input}mThese are your chosen colors and effects for:\n\
 ${extension}${e_aes}"
-					echo ""
-					echo ""
-					preprompt="Is this the correct colors and effect for:"$'\n'
-					if prompt_ynq "${preprompt}${extension}? ";
-					then
-						# Replace the ANSI_ESCAPE with the user input
-						sed -i "s/${extension} ANSI_ESCAPE/${extension} ${u_input}/g" "$filename"
-					break
-					fi
-				done
-			fi
-		fi
-	done < "$filename"
+          echo ""
+          echo ""
+          preprompt="Is this the correct colors and effect for:"$'\n'
+          if prompt_ynq "${preprompt}${extension}? ";
+          then
+            # Replace the ANSI_ESCAPE with the user input
+            sed -i "s/${extension} ANSI_ESCAPE/${extension} ${u_input}/g" "$filename"
+          break
+          fi
+        done
+      fi
+    fi
+  done < "$filename"
 
-	# Print a when we reach EOF
-	printf "Reached EOF\n"
+  # Print a when we reach EOF
+  printf "Reached EOF\n"
 }
 
 # Function to generate dircolors template file from etc/mime.types
 generate_dircolors_file_template() {
-	printf "Generating a dircolors file...\n"
+  printf "Generating a dircolors file...\n"
 
-	# Add file type MACROS to dircolors file
-	printf "# Generated by thedefault-dircolors-generator ${version}
+  # Add file type MACROS to dircolors file
+  printf "# Generated by thedefault-dircolors-generator ${version}
 #
 # MACROS for file types, directories, devices and permissions.
 #
@@ -517,199 +497,199 @@ CAPABILITY ANSI_ESCAPE # MACROS capabilities (linux-specific feature)
 DOOR ANSI_ESCAPE # MACROS doors (IPC mechanism on some UNIX systems, notably Solaris)
 " >> "$dircolors_file"
 
-	# Add MIME types to dircolors file
-	printf "#
+  # Add MIME types to dircolors file
+  printf "#
 # Format: <extension> <ANSI escape sequence> # <MIME type> <MIME subtype>
 # File extension ANSI_ESCAPE # MIME type MIME subtype
 #
 " >> "$dircolors_file"
 
-	# We need to get the MIME types from /etc/mime.types
-	#
-	# Check if /etc/mime.types exists
-	if [[ ! -f "/etc/mime.types" ]]; then
-		printf "Could not access /etc/mime.types.\n"
-		printf "Please ensure the files exists and you have read permissions.\n"
-		exit 1
-	fi
+  # We need to get the MIME types from /etc/mime.types
+  #
+  # Check if /etc/mime.types exists
+  if [[ ! -f "/etc/mime.types" ]]; then
+    printf "Could not access /etc/mime.types.\n"
+    printf "Please ensure the files exists and you have read permissions.\n"
+    exit 1
+  fi
 
-	# Print a message if verbose is disabled
-	printf "Processing MIME types. This might take a while...\n"
+  # Print a message if verbose is disabled
+  printf "Processing MIME types. This might take a while...\n"
 
-	extension_counter=0
-	declare -A unq_extensions
+  extension_counter=0
+  declare -A unq_extensions
 
-	while IFS= read -r line; do
-		# Check if the line contains a /
-		if echo "$line" | grep -q "/"; then
-			local str=$(echo "$line" | awk '{print $1}')
-			local ext=$(echo "$line" | \
-				awk '{$1=""; print $0}' | \
-				tr -s ' ' | \
-				sed 's/^ //')
-			local mime_type=$(echo "$str" | cut -d'/' -f1)
-			local mime_subtype=$(echo "$str" | cut -d'/' -f2)
+  while IFS= read -r line; do
+    # Check if the line contains a /
+    if echo "$line" | grep -q "/"; then
+      local str=$(echo "$line" | awk '{print $1}')
+      local ext=$(echo "$line" | \
+        awk '{$1=""; print $0}' | \
+        tr -s ' ' | \
+        sed 's/^ //')
+      local mime_type=$(echo "$str" | cut -d'/' -f1)
+      local mime_subtype=$(echo "$str" | cut -d'/' -f2)
 
-			# Print processing information
-			if [[ $verbose == true ]]; then
-				printf "Processing MIME type: $str\n"
-			fi
+      # Print processing information
+      if [[ $verbose == true ]]; then
+        printf "Processing MIME type: $str\n"
+      fi
 
-			# Exclude commented lines and inode
-			if [[ ${mime_type:0:1} == "#" ]] || \
-				[[ ${mime_type:0:5} == "inode" ]]; then
-				if [[ $verbose == true ]]; then
-					printf "Skipping: $str\n"
-				fi
-				continue
-			fi
+      # Exclude commented lines and inode
+      if [[ ${mime_type:0:1} == "#" ]] || \
+        [[ ${mime_type:0:5} == "inode" ]]; then
+        if [[ $verbose == true ]]; then
+          printf "Skipping: $str\n"
+        fi
+        continue
+      fi
 
-			# Add the extension to the dircolors file
-			for extension in $ext;
-			do
-				if [[ ! -f "$mime_types_dir/$mime_type/$mime_subtype.$extension" ]] && \
-					[[ ${create_demo_dirs_files} == true ]];
-				then
-					mkdir -p "$mime_types_dir/$mime_type/"
-					touch "$mime_types_dir/$mime_type/$mime_subtype.$extension"
-				fi
-				printf ".$extension ANSI_ESCAPE # $mime_type $mime_subtype
+      # Add the extension to the dircolors file
+      for extension in $ext;
+      do
+        if [[ ! -f "$mime_types_dir/$mime_type/$mime_subtype.$extension" ]] && \
+          [[ ${create_demo_dirs_files} == true ]];
+        then
+          mkdir -p "$mime_types_dir/$mime_type/"
+          touch "$mime_types_dir/$mime_type/$mime_subtype.$extension"
+        fi
+        printf ".$extension ANSI_ESCAPE # $mime_type $mime_subtype
 " >> "$dircolors_file"
-				((extension_counter++))
-				unq_extensions["$extension"]=1
-			done
-		fi
-	done < "/etc/mime.types"
+        ((extension_counter++))
+        unq_extensions["$extension"]=1
+      done
+    fi
+  done < "/etc/mime.types"
 
 # Print the counts
-	# TODO Handle duplicate extensions
-	printf "Extensions found: $extension_counter\n"
-	printf "Unique extensions found: ${#unq_extensions[@]}\n"
+  # TODO Handle duplicate extensions
+  printf "Extensions found: $extension_counter\n"
+  printf "Unique extensions found: ${#unq_extensions[@]}\n"
 }
 
 # Function to generate a dircolors file
 generate_dircolors_file() {
-	dircolors_file="$1"
+  dircolors_file="$1"
 
-	# Check if the file exists
-	# TODO If the file exists, ask the user if they want to overwrite it
-	# TODO If the file exists, ask the user if they want to parse it
-	if [ -f "$dircolors_file" ];
-	then
-		printf "File $dircolors_file exists.\n"
+  # Check if the file exists
+  # TODO If the file exists, ask the user if they want to overwrite it
+  # TODO If the file exists, ask the user if they want to parse it
+  if [ -f "$dircolors_file" ];
+  then
+    printf "File $dircolors_file exists.\n"
 
-		# Ask the user to overwrite the file or use it
-		local prompt="Try:
+    # Ask the user to overwrite the file or use it
+    local prompt="Try:
 y - Overwrite the existing file and generate a new dircolors file.
 n - Use existing file and start the configurator.
 q - Quit the script.
 Do you want to overwrite the file? "
-		if prompt_ynq "${prompt}";
-		then
-			printf "Overwriting...\n"
-			rm -f "$dircolors_file"
-			generate_template=true
-		else
-			# TODO Add support for parsing the existing file
-			printf "Using existing file...\n"
-			generate_template=false
-		fi
-	else
-		generate_template=true
-	fi
+    if prompt_ynq "${prompt}";
+    then
+      printf "Overwriting...\n"
+      rm -f "$dircolors_file"
+      generate_template=true
+    else
+      # TODO Add support for parsing the existing file
+      printf "Using existing file...\n"
+      generate_template=false
+    fi
+  else
+    generate_template=true
+  fi
 
-	if [[ $generate_template == true ]];
-	then
-		# Create the dircolors file
-		touch "$dircolors_file"
-	fi
+  if [[ $generate_template == true ]];
+  then
+    # Create the dircolors file
+    touch "$dircolors_file"
+  fi
 
-	# Check if the file is readable and writable
-	if [ ! -r "$dircolors_file" ]; then
-		printf "File $dircolors_file is not readable.\n"
-		printf "Please check the permissions of $dircolors_file.\n"
-		exit 1
-	fi
+  # Check if the file is readable and writable
+  if [ ! -r "$dircolors_file" ]; then
+    printf "File $dircolors_file is not readable.\n"
+    printf "Please check the permissions of $dircolors_file.\n"
+    exit 1
+  fi
 
-	# Generate a dircolors file template
-	if [[ $generate_template == true ]];
-	then
-		generate_dircolors_file_template
-	fi
-	
-	# Start the configurator
-	if [[ "$dircolors_file" == /tmp/* ]];
-	then
-		# or exit, continue, etc.
-		echo -n ""
-	else
-		configure_dircolors_file "$dircolors_file"
-	fi
+  # Generate a dircolors file template
+  if [[ $generate_template == true ]];
+  then
+    generate_dircolors_file_template
+  fi
+  
+  # Start the configurator
+  if [[ "$dircolors_file" == /tmp/* ]];
+  then
+    # or exit, continue, etc.
+    echo -n ""
+  else
+    configure_dircolors_file "$dircolors_file"
+  fi
 
-	# We are done here
-	printf "Finished generation of a dircolors file...\n\n"
+  # We are done here
+  printf "Finished generation of a dircolors file...\n\n"
 }
 
 # Entry point of the script
 main() {
-	while [[ $# -gt 0 ]]; do
-		key="$1"
-		case $key in
-			--help)
-				# TODO Add help message
-				printf "$help\n"
-				exit 0
-				;;
-			--version)
-				printf "$version\n"
-				exit 0
-				;;
-			--verbose)
-				verbose="true"
-				shift # past argument
-				;;
-			*)    # unknown option
-				printf "Unknown option: $1\n"
-				exit 1
-				;;
-		esac
-		shift # past argument or value
-	done
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+      --help)
+        # TODO Add help message
+        printf "$help\n"
+        exit 0
+        ;;
+      --version)
+        printf "$version\n"
+        exit 0
+        ;;
+      --verbose)
+        verbose="true"
+        shift # past argument
+        ;;
+      *)    # unknown option
+        printf "Unknown option: $1\n"
+        exit 1
+        ;;
+    esac
+    shift # past argument or value
+  done
 
-	# Welcome to thedefault-dircolors-generator
-	print_msg "msg_welcome"
+  # Welcome to thedefault-dircolors-generator
+  print_msg "msg_welcome"
 
-	while true; do
-		printf "Select an option:\n"
-		printf "1 - Generate a dircolors file\n"
-		printf "2 - Create a set of directories and files for demonstration\n"
-		printf "q - Quit\n"
+  while true; do
+    printf "Select an option:\n"
+    printf "1 - Generate a dircolors file\n"
+    printf "2 - Create a set of directories and files for demonstration\n"
+    printf "q - Quit\n"
 
-		read -p "Enter your choice: " choice
+    read -p "Enter your choice: " choice
 
-		case $choice in
-			1)
-				create_demo_dirs_files=false
-				generate_dircolors_file "dircolors.demo"
-				;;
-			2)
-				create_demo_dirs_files=true
-				create_directory "${demo_dir}"
-				create_demo_macros "${macros_dir}"
-				printf "MACROS demonstration directories and files created\n"
-				generate_dircolors_file "/tmp/dircolors.demo"
-				printf "MIME demonstration directories and files created\n"
-				rm -f "/tmp/dircolors.demo"
-				printf "Temporary file removed\n"
-				;;
-			q)
-				exit 0
-				;;
-			*)
-				printf "Invalid choice. Please try again.\n\n"
-				;;
-		esac
-	done
+    case $choice in
+      1)
+        create_demo_dirs_files=false
+        generate_dircolors_file "dircolors.demo"
+        ;;
+      2)
+        create_demo_dirs_files=true
+        create_directory "${demo_dir}"
+        create_demo_macros "${macros_dir}"
+        printf "MACROS demonstration directories and files created\n"
+        generate_dircolors_file "/tmp/dircolors.demo"
+        printf "MIME demonstration directories and files created\n"
+        rm -f "/tmp/dircolors.demo"
+        printf "Temporary file removed\n"
+        ;;
+      q)
+        exit 0
+        ;;
+      *)
+        printf "Invalid choice. Please try again.\n\n"
+        ;;
+    esac
+  done
 }
 
 # Execute the main function
